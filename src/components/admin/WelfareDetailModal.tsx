@@ -148,6 +148,11 @@ const WelfareDetailModal: React.FC<Props> = ({ welfare, onClose, canEdit, onChan
               <FileDown className="w-3 h-3 mr-1" />தமிழ் PDF
             </Button>
           </div>
+          {canEdit && (
+            <div className="mt-2">
+              <AdminIssueControls kind="welfare" id={welfare.id} onHold={!!welfare.on_hold} onChanged={onChanged} onDeleted={() => { onChanged?.(); onClose(); }} />
+            </div>
+          )}
           {welfare.status === 'pending_admin_confirmation' && canEdit && (
             <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-amber-50 border-2 border-amber-400 px-3 py-2 text-xs text-amber-900">
               <span className="inline-flex items-center gap-1.5 font-semibold"><CheckCircle2 className="w-3.5 h-3.5" />Cadre marked resolved — needs confirmation</span>
