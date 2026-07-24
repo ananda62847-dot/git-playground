@@ -21,6 +21,7 @@ import { useAutoTranslate } from '@/hooks/useAutoTranslate';
 import { downloadTamilComplaintPdf } from '@/lib/tamilComplaintPdf';
 import ReportInternalNotes from '@/components/admin/ReportInternalNotes';
 import FalseCloseControl from '@/components/admin/FalseCloseControl';
+import AdminIssueControls from '@/components/admin/AdminIssueControls';
 
 interface Props {
   welfare: any;
