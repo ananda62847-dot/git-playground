@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    /* TVK Brand Colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+
+    /* Maroon Red - Primary */
+    --primary: 0 70% 47%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Golden Yellow - Secondary */
+    --secondary: 48 98% 60%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 40 30% 95%;
+    --muted-foreground: 0 0% 40%;
+
+    /* Yellow Accent */
+    --accent: 48 98% 60%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 20% 88%;
+    --input: 40 20% 88%;
+    --ring: 0 70% 47%;
+
+    --radius: 0.75rem;
+
+    /* Custom TVK Variables */
+    --tvk-maroon: 0 70% 47%;
+    --tvk-maroon-dark: 0 75% 35%;
+    --tvk-yellow: 48 98% 60%;
+    --tvk-yellow-light: 48 98% 70%;
+    --tvk-cream: 40 50% 97%;
+    --tvk-gold: 45 90% 50%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(0, 70%, 47%) 0%, hsl(0, 75%, 35%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(48, 98%, 60%) 0%, hsl(45, 90%, 50%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(40, 50%, 97%) 100%);
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(0 70% 47% / 0.15);
+    --shadow-elevated: 0 10px 40px -10px hsl(0 70% 47% / 0.25);
+    --shadow-yellow: 0 4px 20px -4px hsl(48 98% 60% / 0.4);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 0 70% 47%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 48 98% 60%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 40 20% 88%;
+    --sidebar-ring: 0 70% 47%;
+  }
+
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 95%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 0 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 48 98% 60%;
+    --secondary-foreground: 0 0% 10%;
+
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 48 98% 60%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 70% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', 'Noto Sans Tamil', sans-serif;
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent iOS zoom on focus by enforcing 16px on form fields (mobile only) */
+  @media (max-width: 640px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  /* Larger tap targets on mobile */
+  @media (max-width: 640px) {
+    button, a, [role="button"] {
+      min-height: 40px;
+    }
+    button.size-icon, a.size-icon {
+      min-height: 0;
+    }
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', 'Noto Sans Tamil', sans-serif;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  .font-tamil {
+    font-family: 'Noto Sans Tamil', sans-serif;
+  }
+}
+
+@layer components {
+  .tvk-gradient-bg {
+    background: var(--gradient-hero);
+  }
+
+  .tvk-gradient-text {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .tvk-shadow {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .tvk-shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .tvk-shadow-yellow {
+    box-shadow: var(--shadow-yellow);
+  }
+
+  .tvk-card {
+    background: var(--gradient-card);
+    @apply rounded-xl border border-border;
+  }
+
+  .tvk-button-primary {
+    @apply bg-primary text-primary-foreground hover:opacity-90 transition-all duration-300;
+  }
+
+  .tvk-button-accent {
+    background: var(--gradient-accent);
+    @apply text-accent-foreground font-semibold hover:opacity-90 transition-all duration-300;
+  }
+}
+
+@layer utilities {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+/* Mobile overflow safety — keep horizontal clipping off the scrolling root */
+#root { max-width: 100vw; overflow-x: clip; }
+img, video, table, pre { max-width: 100%; height: auto; }
+.leaflet-container { font-family: inherit; }
+
+/* Tables: allow horizontal scroll on mobile instead of breaking layout */
+@media (max-width: 768px) {
+  table { display: block; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* Safe-area aware app shell — pad content above bottom nav on mobile */
+.app-shell { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+@media (min-width: 768px) { .app-shell { padding-bottom: 0; } }
+
+/* Safe-area top padding for fixed/sticky headers on PWA/standalone */
+.pt-safe { padding-top: env(safe-area-inset-top) !important; }
+.top-safe { top: env(safe-area-inset-top); }
+
+/* Animated unviewed pulse */
+@keyframes blink-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-blink { animation: blink-soft 1.4s ease-in-out infinite; }
+
+/* Force any popover/select/dropdown content to fit within viewport on mobile */
+@media (max-width: 640px) {
+  [data-radix-popper-content-wrapper] > * {
+    max-width: calc(100vw - 1rem) !important;
+  }
+  /* Long unbroken strings (URLs, IDs, ticket numbers) shouldn't push layout */
+  p, span, div, td, th, li, a, h1, h2, h3, h4, h5, h6, label {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  /* Top-level page wrappers must not exceed viewport */
+  main, section, article, .container { max-width: 100vw; }
+}
+
+/* Tamil-aware label: allows glyphs to wrap gracefully instead of truncating with … */
+.tamil-safe {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  white-space: normal;
+}
+[lang="ta"] .tamil-safe,
+[lang="ta"].tamil-safe {
+  font-family: 'Noto Sans Tamil', 'Poppins', sans-serif;
+  line-height: 1.35;
+  letter-spacing: 0;
+}

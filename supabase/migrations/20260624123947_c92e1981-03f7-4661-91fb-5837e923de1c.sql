@@ -1,0 +1,15 @@
+CREATE INDEX IF NOT EXISTS idx_problem_assignments_cadre_active ON public.problem_assignments (cadre_id, active);
+CREATE INDEX IF NOT EXISTS idx_problem_assignments_team_active ON public.problem_assignments (team_id, active);
+CREATE INDEX IF NOT EXISTS idx_problem_assignments_claimed ON public.problem_assignments (claimed_by_cadre_id, active);
+CREATE INDEX IF NOT EXISTS idx_welfare_assignments_cadre_active ON public.welfare_assignments (cadre_id, active);
+CREATE INDEX IF NOT EXISTS idx_welfare_assignments_team_active ON public.welfare_assignments (team_id, active);
+CREATE INDEX IF NOT EXISTS idx_blueprint_tasks_problem_status ON public.blueprint_tasks (problem_id, status);
+CREATE INDEX IF NOT EXISTS idx_blueprint_tasks_welfare_status ON public.blueprint_tasks (welfare_id, status);
+CREATE INDEX IF NOT EXISTS idx_blueprint_tasks_corruption_status ON public.blueprint_tasks (corruption_id, status);
+CREATE INDEX IF NOT EXISTS idx_ai_decisions_status_created ON public.ai_decisions (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_decisions_agent_created ON public.ai_decisions (agent_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_problems_status ON public.problems (status);
+CREATE INDEX IF NOT EXISTS idx_team_members_cadre ON public.team_members (cadre_id);
+CREATE INDEX IF NOT EXISTS idx_problem_assignment_joiners_cadre ON public.problem_assignment_joiners (cadre_id);
+CREATE INDEX IF NOT EXISTS idx_escalations_raised_by ON public.escalations (raised_by_cadre_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_team_postings_cadre ON public.team_postings (cadre_id, starts_at DESC);
