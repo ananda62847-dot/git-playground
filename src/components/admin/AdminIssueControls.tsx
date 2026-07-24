@@ -79,6 +79,29 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
     );
   };
 
+  const uploadEvidence = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (kind !== 'problem') return toast.error('Admin evidence upload is only enabled for problems');
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} > 10MB`); continue; }
+        const ext = file.name.split('.').pop() || 'jpg';
+        const path = `admin/${id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('problem-media').upload(path, file, { upsert: false, contentType: file.type });
+        if (upErr) { toast.error(upErr.message); continue; }
+        const { data: pub } = supabase.storage.from('problem-media').getPublicUrl(path);
+        const isVideo = file.type.startsWith('video/');
+        await supabase.from('problem_media').insert({
+          problem_id: id, url: pub.publicUrl, media_type: isVideo ? 'video' : 'image',
+        });
+      }
+      toast.success('Evidence uploaded');
+      setEvOpen(false);
+      onChanged?.();
+    } finally { setUploading(false); }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-1">
       {onHold && <Badge className="bg-amber-500 text-white text-[10px]">ON HOLD</Badge>}
