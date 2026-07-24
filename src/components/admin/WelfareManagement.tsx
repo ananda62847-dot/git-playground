@@ -31,7 +31,7 @@ const WelfareManagement: React.FC<Props> = ({ scope, canEdit = true, idsFilter }
   const load = async () => {
     setLoading(true);
     if (idsFilter && idsFilter.length === 0) { setRows([]); setLoading(false); return; }
-    let q = supabase.from('welfare_issues').select('*').order('created_at', { ascending: false }).limit(1000);
+    let q = supabase.from('welfare_issues').select('*').is('deleted_at', null).order('created_at', { ascending: false }).limit(1000);
     if (scope?.allowedConstituencies?.length) q = q.in('constituency', scope.allowedConstituencies);
     if (scope?.department) q = q.eq('department', scope.department);
     if (idsFilter && idsFilter.length) q = q.in('id', idsFilter);
