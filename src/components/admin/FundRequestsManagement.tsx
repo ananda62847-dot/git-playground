@@ -17,6 +17,7 @@ import { downloadComplaintPdf } from '@/lib/complaintPdf';
 import { downloadTamilComplaintPdf } from '@/lib/tamilComplaintPdf';
 import ReportInternalNotes from '@/components/admin/ReportInternalNotes';
 import FalseCloseControl from '@/components/admin/FalseCloseControl';
+import AdminIssueControls from '@/components/admin/AdminIssueControls';
 
 const STATUS_COLORS: Record<string, string> = {
   submitted: 'bg-blue-100 text-blue-700',
