@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string | null
+          created_at: string
+          entity_id: string | null
+          entity_kind: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_kind: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string | null
+          created_at?: string
+          entity_id?: string | null
+          entity_kind?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: []
+      }
       admin_sticky_notes: {
         Row: {
           body: string
@@ -1009,6 +1039,9 @@ export type Database = {
           confirmed_good_faith: boolean
           constituency: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           department: string | null
           description: string
           evidence_url: string | null
@@ -1039,6 +1072,9 @@ export type Database = {
           confirmed_good_faith?: boolean
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           department?: string | null
           description: string
           evidence_url?: string | null
@@ -1069,6 +1105,9 @@ export type Database = {
           confirmed_good_faith?: boolean
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           department?: string | null
           description?: string
           evidence_url?: string | null
@@ -1300,14 +1339,21 @@ export type Database = {
           closed_as_false_reason: string | null
           constituency: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           disbursed_amount: number | null
           disbursed_at: string | null
           disclaimer_accepted: boolean
           filed_by_cadre_id: string | null
+          held_at: string | null
+          held_by: string | null
+          hold_reason: string | null
           id: string
           is_cadre_filed: boolean
           latitude: number | null
           longitude: number | null
+          on_hold: boolean
           purpose: string
           reviewed_by: string | null
           status: string
@@ -1334,14 +1380,21 @@ export type Database = {
           closed_as_false_reason?: string | null
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           disbursed_amount?: number | null
           disbursed_at?: string | null
           disclaimer_accepted?: boolean
           filed_by_cadre_id?: string | null
+          held_at?: string | null
+          held_by?: string | null
+          hold_reason?: string | null
           id?: string
           is_cadre_filed?: boolean
           latitude?: number | null
           longitude?: number | null
+          on_hold?: boolean
           purpose: string
           reviewed_by?: string | null
           status?: string
@@ -1368,14 +1421,21 @@ export type Database = {
           closed_as_false_reason?: string | null
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           disbursed_amount?: number | null
           disbursed_at?: string | null
           disclaimer_accepted?: boolean
           filed_by_cadre_id?: string | null
+          held_at?: string | null
+          held_by?: string | null
+          hold_reason?: string | null
           id?: string
           is_cadre_filed?: boolean
           latitude?: number | null
           longitude?: number | null
+          on_hold?: boolean
           purpose?: string
           reviewed_by?: string | null
           status?: string
@@ -1824,13 +1884,20 @@ export type Database = {
           completion_report_url: string | null
           constituency: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           department: string
           description: string
+          held_at: string | null
+          held_by: string | null
+          hold_reason: string | null
           id: string
           is_cadre_filed: boolean
           latitude: number | null
           longitude: number | null
           master_problem_id: string | null
+          on_hold: boolean
           pincode: string
           polling_booth: string | null
           reported_by_cadre_id: string | null
@@ -1867,13 +1934,20 @@ export type Database = {
           completion_report_url?: string | null
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           department: string
           description: string
+          held_at?: string | null
+          held_by?: string | null
+          hold_reason?: string | null
           id?: string
           is_cadre_filed?: boolean
           latitude?: number | null
           longitude?: number | null
           master_problem_id?: string | null
+          on_hold?: boolean
           pincode: string
           polling_booth?: string | null
           reported_by_cadre_id?: string | null
@@ -1910,13 +1984,20 @@ export type Database = {
           completion_report_url?: string | null
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           department?: string
           description?: string
+          held_at?: string | null
+          held_by?: string | null
+          hold_reason?: string | null
           id?: string
           is_cadre_filed?: boolean
           latitude?: number | null
           longitude?: number | null
           master_problem_id?: string | null
+          on_hold?: boolean
           pincode?: string
           polling_booth?: string | null
           reported_by_cadre_id?: string | null
@@ -2523,13 +2604,20 @@ export type Database = {
           closed_as_false_reason: string | null
           constituency: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           department: string | null
           description: string
+          held_at: string | null
+          held_by: string | null
+          hold_reason: string | null
           id: string
           is_cadre_filed: boolean
           latitude: number | null
           longitude: number | null
           months_pending: string | null
+          on_hold: boolean
           pincode: string
           proof_urls: string[] | null
           reported_by_cadre_id: string | null
@@ -2564,13 +2652,20 @@ export type Database = {
           closed_as_false_reason?: string | null
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           department?: string | null
           description: string
+          held_at?: string | null
+          held_by?: string | null
+          hold_reason?: string | null
           id?: string
           is_cadre_filed?: boolean
           latitude?: number | null
           longitude?: number | null
           months_pending?: string | null
+          on_hold?: boolean
           pincode: string
           proof_urls?: string[] | null
           reported_by_cadre_id?: string | null
@@ -2605,13 +2700,20 @@ export type Database = {
           closed_as_false_reason?: string | null
           constituency?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           department?: string | null
           description?: string
+          held_at?: string | null
+          held_by?: string | null
+          hold_reason?: string | null
           id?: string
           is_cadre_filed?: boolean
           latitude?: number | null
           longitude?: number | null
           months_pending?: string | null
+          on_hold?: boolean
           pincode?: string
           proof_urls?: string[] | null
           reported_by_cadre_id?: string | null
@@ -2732,9 +2834,26 @@ export type Database = {
       }
     }
     Functions: {
+      admin_bulk_extend_deadlines: {
+        Args: { _days: number; _through_date?: string }
+        Returns: number
+      }
+      admin_delete_issue: {
+        Args: { _id: string; _kind: string; _reason: string }
+        Returns: undefined
+      }
+      admin_toggle_hold: {
+        Args: { _hold: boolean; _id: string; _kind: string; _reason?: string }
+        Returns: undefined
+      }
+      admin_update_problem_location: {
+        Args: { _address?: string; _id: string; _lat: number; _lng: number }
+        Returns: undefined
+      }
       apply_sla_breach: { Args: { _problem_id: string }; Returns: undefined }
       bt_can_start: { Args: { _task_id: string }; Returns: boolean }
       bt_task_satisfied: { Args: { _task_id: string }; Returns: boolean }
+      cadre_heartbeat: { Args: never; Returns: undefined }
       can_current_cadre_access_assignment: {
         Args: { _problem_id: string }
         Returns: boolean

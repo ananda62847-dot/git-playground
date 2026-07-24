@@ -176,8 +176,8 @@ const CadreDashboard: React.FC = () => {
     import('@/lib/notifications').then(m => m.syncNotificationToken({
       role: 'cadre', constituency: cadre.constituency, department: cadre.department,
     }));
-    // Heartbeat: record last_seen_at so admins can see when this cadre last opened the app.
-    const ping = () => supabase.from('cadres').update({ last_seen_at: new Date().toISOString() } as any).eq('id', cadre.id);
+    // Heartbeat: record last_seen_at via SECURITY DEFINER RPC (RLS-safe).
+    const ping = () => supabase.rpc('cadre_heartbeat' as any);
     ping();
     const iv = setInterval(ping, 2 * 60 * 1000);
     const onVis = () => { if (document.visibilityState === 'visible') ping(); };

@@ -31,7 +31,7 @@ const CorruptionReports: React.FC = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('corruption_reports').select('*').order('created_at', { ascending: false });
+    const { data, error } = await supabase.from('corruption_reports').select('*').is('deleted_at', null).order('created_at', { ascending: false });
     if (error) toast.error(error.message);
     setRows(data || []); setLoading(false);
   };

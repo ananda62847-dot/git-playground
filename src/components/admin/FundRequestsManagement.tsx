@@ -36,7 +36,7 @@ const FundRequestsManagement: React.FC = () => {
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase.from('fund_assistance_requests').select('*, cadres!fund_assistance_requests_filed_by_cadre_id_fkey(name)').order('created_at', { ascending: false }).limit(500);
+    const { data, error } = await supabase.from('fund_assistance_requests').select('*, cadres!fund_assistance_requests_filed_by_cadre_id_fkey(name)').is('deleted_at', null).order('created_at', { ascending: false }).limit(500);
     if (error) toast.error(error.message);
     setRows(data || []);
     setLoading(false);
