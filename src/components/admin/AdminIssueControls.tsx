@@ -116,6 +116,12 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
         </Button>
       )}
 
+      {kind === 'problem' && (
+        <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setEvOpen(true)}>
+          <ImagePlus className="w-3 h-3 mr-1" />Add evidence
+        </Button>
+      )}
+
       <Button size="sm" variant="outline" className="h-7 text-[11px] text-red-600 hover:bg-red-50" onClick={() => setDelOpen(true)}>
         <Trash2 className="w-3 h-3 mr-1" />Delete
       </Button>
