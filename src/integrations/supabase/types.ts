@@ -1000,7 +1000,7 @@ export type Database = {
           ai_action_plan_at: string | null
           amount_demanded: number | null
           area: string | null
-          belongs_to_constituency: boolean
+          belongs_to_constituency: boolean | null
           city: string | null
           closed_as_false: boolean
           closed_as_false_at: string | null
@@ -1030,7 +1030,7 @@ export type Database = {
           ai_action_plan_at?: string | null
           amount_demanded?: number | null
           area?: string | null
-          belongs_to_constituency?: boolean
+          belongs_to_constituency?: boolean | null
           city?: string | null
           closed_as_false?: boolean
           closed_as_false_at?: string | null
@@ -1060,7 +1060,7 @@ export type Database = {
           ai_action_plan_at?: string | null
           amount_demanded?: number | null
           area?: string | null
-          belongs_to_constituency?: boolean
+          belongs_to_constituency?: boolean | null
           city?: string | null
           closed_as_false?: boolean
           closed_as_false_at?: string | null
@@ -1287,7 +1287,7 @@ export type Database = {
           admin_notes: string | null
           amount_requested: number | null
           bank_details: string | null
-          belongs_to_constituency: boolean
+          belongs_to_constituency: boolean | null
           beneficiary_address: string | null
           beneficiary_age: number | null
           beneficiary_name: string
@@ -1321,7 +1321,7 @@ export type Database = {
           admin_notes?: string | null
           amount_requested?: number | null
           bank_details?: string | null
-          belongs_to_constituency?: boolean
+          belongs_to_constituency?: boolean | null
           beneficiary_address?: string | null
           beneficiary_age?: number | null
           beneficiary_name: string
@@ -1355,7 +1355,7 @@ export type Database = {
           admin_notes?: string | null
           amount_requested?: number | null
           bank_details?: string | null
-          belongs_to_constituency?: boolean
+          belongs_to_constituency?: boolean | null
           beneficiary_address?: string | null
           beneficiary_age?: number | null
           beneficiary_name?: string
@@ -2514,7 +2514,7 @@ export type Database = {
           ai_action_plan_at: string | null
           application_id: string | null
           area: string | null
-          belongs_to_constituency: boolean
+          belongs_to_constituency: boolean | null
           citizen_confirmed: boolean | null
           city: string
           closed_as_false: boolean
@@ -2555,7 +2555,7 @@ export type Database = {
           ai_action_plan_at?: string | null
           application_id?: string | null
           area?: string | null
-          belongs_to_constituency?: boolean
+          belongs_to_constituency?: boolean | null
           citizen_confirmed?: boolean | null
           city: string
           closed_as_false?: boolean
@@ -2596,7 +2596,7 @@ export type Database = {
           ai_action_plan_at?: string | null
           application_id?: string | null
           area?: string | null
-          belongs_to_constituency?: boolean
+          belongs_to_constituency?: boolean | null
           citizen_confirmed?: boolean | null
           city?: string
           closed_as_false?: boolean
@@ -2877,188 +2877,102 @@ export type Database = {
       refresh_cadre_workload: { Args: never; Returns: undefined }
       refresh_map_stats: { Args: never; Returns: undefined }
       refresh_public_stats: { Args: never; Returns: undefined }
-      submit_corruption_report:
-        | {
-            Args: {
-              _amount_demanded?: number
-              _area?: string
-              _city?: string
-              _confirmed_good_faith?: boolean
-              _constituency?: string
-              _department?: string
-              _description?: string
-              _evidence_url?: string
-              _evidence_urls?: string[]
-              _incident_date?: string
-              _incident_time?: string
-              _incident_type?: string
-              _office_location?: string
-              _person_involved?: string
-              _person_name?: string
-            }
-            Returns: {
-              ticket_no: string
-            }[]
-          }
-        | {
-            Args: {
-              _amount_demanded?: number
-              _area?: string
-              _belongs_to_constituency?: boolean
-              _city?: string
-              _confirmed_good_faith?: boolean
-              _constituency?: string
-              _department?: string
-              _description?: string
-              _evidence_url?: string
-              _evidence_urls?: string[]
-              _filed_by_cadre_id?: string
-              _incident_date?: string
-              _incident_time?: string
-              _incident_type?: string
-              _office_location?: string
-              _person_involved?: string
-              _person_name?: string
-            }
-            Returns: {
-              ticket_no: string
-            }[]
-          }
-      submit_fund_request:
-        | {
-            Args: {
-              _amount_requested?: number
-              _bank_details?: string
-              _beneficiary_address?: string
-              _beneficiary_age?: number
-              _beneficiary_name: string
-              _beneficiary_phone: string
-              _category: string
-              _city?: string
-              _constituency?: string
-              _disclaimer_accepted?: boolean
-              _filed_by_cadre_id?: string
-              _purpose: string
-              _supporting_docs?: string[]
-              _urgency?: string
-            }
-            Returns: {
-              ticket_no: string
-            }[]
-          }
-        | {
-            Args: {
-              _amount_requested?: number
-              _bank_details?: string
-              _belongs_to_constituency?: boolean
-              _beneficiary_address?: string
-              _beneficiary_age?: number
-              _beneficiary_name: string
-              _beneficiary_phone: string
-              _category: string
-              _city?: string
-              _constituency?: string
-              _disclaimer_accepted?: boolean
-              _filed_by_cadre_id?: string
-              _latitude?: number
-              _longitude?: number
-              _purpose: string
-              _supporting_docs?: string[]
-              _urgency?: string
-              _voice_note_url?: string
-            }
-            Returns: {
-              ticket_no: string
-            }[]
-          }
-      submit_problem:
-        | {
-            Args: {
-              _address_line?: string
-              _area?: string
-              _category: string
-              _city: string
-              _constituency?: string
-              _department: string
-              _description: string
-              _photo_urls?: string[]
-              _pincode: string
-              _polling_booth?: string
-              _reporter_age?: number
-              _reporter_name: string
-              _reporter_phone: string
-              _title: string
-              _urgency?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _address_line?: string
-              _area?: string
-              _belongs_to_constituency?: boolean
-              _category: string
-              _city: string
-              _constituency?: string
-              _department: string
-              _description: string
-              _filed_by_cadre_id?: string
-              _latitude?: number
-              _longitude?: number
-              _photo_urls?: string[]
-              _pincode: string
-              _polling_booth?: string
-              _reporter_age?: number
-              _reporter_name: string
-              _reporter_phone: string
-              _title: string
-              _urgency?: string
-              _voice_note_url?: string
-            }
-            Returns: Json
-          }
-      submit_welfare_issue:
-        | {
-            Args: {
-              _application_id?: string
-              _area?: string
-              _city: string
-              _constituency?: string
-              _description: string
-              _months_pending?: string
-              _pincode: string
-              _proof_urls?: string[]
-              _reporter_name: string
-              _reporter_phone: string
-              _scheme_name?: string
-              _scheme_type: string
-              _subcategory: string
-              _title: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _application_id?: string
-              _area?: string
-              _belongs_to_constituency?: boolean
-              _city: string
-              _constituency?: string
-              _description: string
-              _filed_by_cadre_id?: string
-              _months_pending?: string
-              _pincode: string
-              _proof_urls?: string[]
-              _reporter_name: string
-              _reporter_phone: string
-              _scheme_name?: string
-              _scheme_type: string
-              _subcategory: string
-              _title: string
-              _voice_note_url?: string
-            }
-            Returns: Json
-          }
+      submit_corruption_report: {
+        Args: {
+          _amount_demanded?: number
+          _area?: string
+          _belongs_to_constituency?: boolean
+          _city?: string
+          _confirmed_good_faith?: boolean
+          _constituency?: string
+          _department?: string
+          _description?: string
+          _evidence_url?: string
+          _evidence_urls?: string[]
+          _filed_by_cadre_id?: string
+          _incident_date?: string
+          _incident_time?: string
+          _incident_type?: string
+          _office_location?: string
+          _person_involved?: string
+          _person_name?: string
+        }
+        Returns: {
+          ticket_no: string
+        }[]
+      }
+      submit_fund_request: {
+        Args: {
+          _amount_requested?: number
+          _bank_details?: string
+          _belongs_to_constituency?: boolean
+          _beneficiary_address?: string
+          _beneficiary_age?: number
+          _beneficiary_name: string
+          _beneficiary_phone: string
+          _category: string
+          _city?: string
+          _constituency?: string
+          _disclaimer_accepted?: boolean
+          _filed_by_cadre_id?: string
+          _latitude?: number
+          _longitude?: number
+          _purpose: string
+          _supporting_docs?: string[]
+          _urgency?: string
+          _voice_note_url?: string
+        }
+        Returns: {
+          ticket_no: string
+        }[]
+      }
+      submit_problem: {
+        Args: {
+          _address_line?: string
+          _area?: string
+          _belongs_to_constituency?: boolean
+          _category: string
+          _city: string
+          _constituency?: string
+          _department: string
+          _description: string
+          _filed_by_cadre_id?: string
+          _latitude?: number
+          _longitude?: number
+          _photo_urls?: string[]
+          _pincode: string
+          _polling_booth?: string
+          _reporter_age?: number
+          _reporter_name: string
+          _reporter_phone: string
+          _title: string
+          _urgency?: string
+          _voice_note_url?: string
+        }
+        Returns: Json
+      }
+      submit_welfare_issue: {
+        Args: {
+          _application_id?: string
+          _area?: string
+          _belongs_to_constituency?: boolean
+          _city: string
+          _constituency?: string
+          _description: string
+          _filed_by_cadre_id?: string
+          _months_pending?: string
+          _pincode: string
+          _proof_urls?: string[]
+          _reporter_name: string
+          _reporter_phone: string
+          _scheme_name?: string
+          _scheme_type: string
+          _subcategory: string
+          _title: string
+          _voice_note_url?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "cadre" | "department"
