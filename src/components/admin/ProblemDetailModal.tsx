@@ -20,6 +20,7 @@ import { downloadComplaintPdf } from '@/lib/complaintPdf';
 import { downloadTamilComplaintPdf } from '@/lib/tamilComplaintPdf';
 import ReportInternalNotes from '@/components/admin/ReportInternalNotes';
 import FalseCloseControl from '@/components/admin/FalseCloseControl';
+import AdminIssueControls from '@/components/admin/AdminIssueControls';
 import { toast } from 'sonner';
 
 const timeAgo = (iso: string) => {
@@ -160,6 +161,18 @@ const ProblemDetailModal: React.FC<{ problem: any; onClose: () => void }> = ({ p
                 <FileDown className="w-3 h-3 mr-1" />தமிழ் PDF
               </Button>
             </div>
+          </div>
+          <div className="mt-2 flex items-center justify-end">
+            <AdminIssueControls
+              kind="problem"
+              id={problem.id}
+              onHold={!!problem.on_hold}
+              showLocation
+              currentLat={problem.latitude}
+              currentLng={problem.longitude}
+              onChanged={onClose}
+              onDeleted={onClose}
+            />
           </div>
           {problem.status === 'pending_admin_confirmation' && (
             <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-amber-50 border-2 border-amber-400 px-3 py-2 text-xs text-amber-900">
