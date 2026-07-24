@@ -18,6 +18,7 @@ import AttachmentLink from '@/components/AttachmentLink';
 import { useAutoTranslate } from '@/hooks/useAutoTranslate';
 import CorruptionInternalNotes from '@/components/admin/CorruptionInternalNotes';
 import FalseCloseControl from '@/components/admin/FalseCloseControl';
+import AdminIssueControls from '@/components/admin/AdminIssueControls';
 
 const STATES = ['submitted', 'under_review', 'verified', 'escalated', 'closed', 'rejected'];
 
@@ -165,6 +166,10 @@ const CorruptionDetailModal: React.FC<Props> = ({ report, onClose, onChanged }) 
             )}
 
             <CorruptionInternalNotes corruptionId={report.id} />
+            <div className="border-t pt-3">
+              <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold mb-2">Admin controls</div>
+              <AdminIssueControls kind="corruption" id={report.id} onChanged={onChanged} onDeleted={() => { onChanged(); onClose(); }} />
+            </div>
             <FalseCloseControl table="corruption_reports" row={report} onDone={() => { onChanged(); onClose(); }} />
           </div>
         </div>

@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { PauseCircle, PlayCircle, Trash2, MapPin } from 'lucide-react';
+import { PauseCircle, PlayCircle, Trash2, MapPin, ImagePlus, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import MapPicker from '@/components/admin/MapPicker';
 
 type Kind = 'problem' | 'welfare' | 'fund' | 'corruption';
 
@@ -26,11 +27,14 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
   const [holdOpen, setHoldOpen] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const [locOpen, setLocOpen] = useState(false);
+  const [evOpen, setEvOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [lat, setLat] = useState<string>(currentLat != null ? String(currentLat) : '');
   const [lng, setLng] = useState<string>(currentLng != null ? String(currentLng) : '');
   const [address, setAddress] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleHold = async () => {
     setBusy(true);
@@ -75,6 +79,29 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
     );
   };
 
+  const uploadEvidence = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    if (kind !== 'problem') return toast.error('Admin evidence upload is only enabled for problems');
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} > 10MB`); continue; }
+        const ext = file.name.split('.').pop() || 'jpg';
+        const path = `admin/${id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from('problem-media').upload(path, file, { upsert: false, contentType: file.type });
+        if (upErr) { toast.error(upErr.message); continue; }
+        const { data: pub } = supabase.storage.from('problem-media').getPublicUrl(path);
+        const isVideo = file.type.startsWith('video/');
+        await supabase.from('problem_media').insert({
+          problem_id: id, url: pub.publicUrl, media_type: isVideo ? 'video' : 'image',
+        });
+      }
+      toast.success('Evidence uploaded');
+      setEvOpen(false);
+      onChanged?.();
+    } finally { setUploading(false); }
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-1">
       {onHold && <Badge className="bg-amber-500 text-white text-[10px]">ON HOLD</Badge>}
@@ -86,6 +113,12 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
       {showLocation && kind === 'problem' && (
         <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setLocOpen(true)}>
           <MapPin className="w-3 h-3 mr-1" />{currentLat ? 'Edit location' : 'Set location'}
+        </Button>
+      )}
+
+      {kind === 'problem' && (
+        <Button size="sm" variant="outline" className="h-7 text-[11px]" onClick={() => setEvOpen(true)}>
+          <ImagePlus className="w-3 h-3 mr-1" />Add evidence
         </Button>
       )}
 
@@ -130,9 +163,15 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
 
       {/* LOCATION dialog */}
       <Dialog open={locOpen} onOpenChange={setLocOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>{currentLat ? 'Edit location' : 'Set location'}</DialogTitle></DialogHeader>
           <div className="space-y-3">
+            <MapPicker
+              lat={lat ? Number(lat) : null}
+              lng={lng ? Number(lng) : null}
+              onChange={(la, ln) => { setLat(String(la.toFixed(6))); setLng(String(ln.toFixed(6))); }}
+            />
+            <p className="text-[11px] text-muted-foreground">Click anywhere on the map to drop a pin.</p>
             <div className="grid grid-cols-2 gap-2">
               <div><Label>Latitude</Label><Input value={lat} onChange={e => setLat(e.target.value)} placeholder="13.0827" /></div>
               <div><Label>Longitude</Label><Input value={lng} onChange={e => setLng(e.target.value)} placeholder="80.2707" /></div>
@@ -142,16 +181,30 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
               <Button type="button" variant="outline" size="sm" onClick={pickFromDevice}>Use my current location</Button>
               {lat && lng && (
                 <a className="text-xs text-primary underline self-center" target="_blank" rel="noreferrer"
-                   href={`https://maps.google.com/?q=${lat},${lng}`}>Preview on Google Maps</a>
+                   href={`https://maps.google.com/?q=${lat},${lng}`}>Open in Google Maps</a>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Tip: open Google Maps, right-click the location and copy the coordinates, then paste above.
-            </p>
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setLocOpen(false)} disabled={busy}>Cancel</Button>
             <Button onClick={saveLocation} disabled={busy}>Save location</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* EVIDENCE dialog */}
+      <Dialog open={evOpen} onOpenChange={setEvOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Add evidence photos/videos</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Upload additional images or short videos captured by the field team. Max 10MB each.</p>
+            <input ref={fileRef} type="file" accept="image/*,video/*" multiple hidden onChange={(e) => uploadEvidence(e.target.files)} />
+            <Button className="w-full" onClick={() => fileRef.current?.click()} disabled={uploading}>
+              {uploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading…</> : <><ImagePlus className="w-4 h-4 mr-2" />Choose files</>}
+            </Button>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEvOpen(false)} disabled={uploading}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
