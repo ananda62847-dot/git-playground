@@ -27,11 +27,14 @@ const AdminIssueControls: React.FC<Props> = ({ kind, id, onHold, showLocation, c
   const [holdOpen, setHoldOpen] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
   const [locOpen, setLocOpen] = useState(false);
+  const [evOpen, setEvOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [lat, setLat] = useState<string>(currentLat != null ? String(currentLat) : '');
   const [lng, setLng] = useState<string>(currentLng != null ? String(currentLng) : '');
   const [address, setAddress] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const toggleHold = async () => {
     setBusy(true);
