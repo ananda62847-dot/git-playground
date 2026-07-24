@@ -218,6 +218,10 @@ const FundDetailModal: React.FC<{ request: any; onClose: () => void; onChanged: 
             <Button onClick={save} disabled={busy} className="w-full">{busy ? 'Saving…' : 'Save review'}</Button>
           </div>
           <ReportInternalNotes kind="fund" reportId={request.id} />
+          <div className="border-t pt-3">
+            <div className="text-[10px] uppercase tracking-wide text-muted-foreground font-bold mb-2">Admin controls</div>
+            <AdminIssueControls kind="fund" id={request.id} onHold={!!request.on_hold} onChanged={onChanged} onDeleted={() => { onChanged(); onClose(); }} />
+          </div>
           <FalseCloseControl table="fund_assistance_requests" row={request} onDone={() => { onChanged(); onClose(); }} />
         </div>
       </DialogContent>
