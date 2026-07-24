@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import AssignProblemModal from './AssignProblemModal';
 import ProblemDetailModal from './ProblemDetailModal';
 import CadreFiledBadge from '@/components/CadreFiledBadge';
+import BulkExtendDeadlinesButton from './BulkExtendDeadlinesButton';
 
 interface Props { allowedConstituencies?: string[]; isAdmin: boolean; }
 
@@ -46,7 +47,7 @@ const ProblemsManagement: React.FC<Props> = ({ allowedConstituencies, isAdmin })
 
   const load = async () => {
     setLoading(true);
-    let q = supabase.from('problems').select('*').order('created_at', { ascending: false }).limit(500);
+    let q = supabase.from('problems').select('*').is('deleted_at', null).order('created_at', { ascending: false }).limit(500);
     if (!isAdmin && allowedConstituencies?.length) q = q.in('constituency', allowedConstituencies);
     const { data } = await q;
     setRows(data || []);
@@ -145,6 +146,7 @@ const ProblemsManagement: React.FC<Props> = ({ allowedConstituencies, isAdmin })
           {['low','medium','high','emergency'].map(u => <option key={u} value={u}>{u}</option>)}
         </select>
         <Button variant="outline" size="sm" onClick={load}><RefreshCw className="w-4 h-4 mr-1" />Refresh</Button>
+        {isAdmin && <BulkExtendDeadlinesButton />}
         <div className="inline-flex rounded-md border border-input overflow-hidden ml-auto">
           <button
             type="button"
