@@ -1,52 +1,75 @@
-# Implementation Plan
+## Overview
 
-## 1. PWA offline cache (login + main shell)
-- Add `vite-plugin-pwa` with `generateSW`, `autoUpdate`, guarded registration wrapper (skip in Lovable preview/iframe/dev; respect `?sw=off`).
-- Precache app shell; runtime caches: `NetworkFirst` for HTML navigations and Supabase GET reads; `CacheFirst` for hashed assets and images. Exclude `/~oauth`.
+Six changes across the Super Admin experience, Cadre tracking, and security hardening.
 
-## 2. #track auto-fill + auto-click
-- On the `/#track` route, read `auto=1` and `ticket=…` (or `t=…`) from URL; on mount, set ticket field value and programmatically click the Track button once. Guard to run only once per URL.
-- Update `AdminSettings` "QR & Auto-Track" tab: QR now encodes `…/#track?ticket=<id>&auto=1`; provide a copyable curl example for tracking API too.
+---
 
-## 3. Cadre "Next Actions" / task titles in Tamil
-- Wrap task titles and success criteria bullets everywhere they render (CadreMyTasks, CadreAIInbox next-actions, EvidenceProofUploader, BlueprintProgressStrip) with `useAutoTranslate` mapping.
-- In Tasks tab, remove the "Update / Proof" button and keep only "View" (which already opens the update+proof drawer).
+### 1. Bulk deadline extension (Super Admin)
 
-## 4. "Confirm Success" flow
-- In cadre blueprint panel: when every task = `verified`/`completed`, show a `Confirm Success` button. Clicking sets parent report to a new `pending_admin_confirmation` status and inserts a `problem_updates` note.
-- Admin side: badge on Problems/Welfare/Corruption/FundRequests list for rows in `pending_admin_confirmation`; detail modal shows a "Confirm Completion" primary button that flips status → `resolved`/`completed`.
+Add a "Extend deadlines" control on the Problems, Welfare, and Fund Requests management screens.
 
-## 5. AI evidence score – PDFs & video
-- `ai-score-evidence` edge function: branch on mime; extract PDF text (unpdf) and video keyframe/audio (ffprobe metadata + Gemini Vision on the first frame via `image_url`) — fall back to filename+metadata scoring when extraction fails.
-- Frontend: expand truncated explanation on 3-dot click (add `expanded` state, remove line-clamp when open).
+- Dropdown with presets: +3 days, +5 days, +7 days, custom (date picker).
+- Scope selector: "All open items due on/before [date]" (defaults to today) or "All open items in current filter view".
+- On confirm: bulk update `due_at` / SLA target date on matching rows (problems, welfare_issues, fund_assistance_requests, blueprint_tasks belonging to them).
+- Writes an audit row and shows a toast with count updated.
 
-## 6. Cadre media modal missing X
-- `MediaPreviewModal` already has X; the cadre side uses a different lightweight viewer. Replace it with `MediaPreviewModal` (or add the same header bar with close/download).
+### 2. Temporary stop (hold) for Problems, Welfare, Fund Requests
 
-## 7. Welfare Assign modal click-through
-- Modal is behind detail modal overlay. Raise Assign modal to `z-[300]` and ensure its backdrop captures pointer events (`pointer-events-auto`).
+- Add columns: `on_hold boolean default false`, `hold_reason text`, `held_at timestamptz`, `held_by uuid` on `problems`, `welfare_issues`, `fund_assistance_requests`.
+- Super Admin detail modal gets "Pause" / "Resume" buttons with reason prompt.
+- While on hold: SLA timers and auto-escalation skip these items (guarded in relevant edge functions / views). Status label shows an amber "On hold" pill in lists.
+- Cadres see a read-only "Paused by admin" banner and cannot edit blueprint tasks until resumed.
 
-## 8. Admin detail view: "Completed Flow" tab
-- Add a `Completed Flow` tab in Problem/Welfare/Corruption/FundRequest detail modals: renders each completed task in order with its proof media as a scrollable flow (read-only). Uses `blueprint_tasks` + `blueprint_audit_log` media.
+### 3. Security hardening (Admin + Cadre)
 
-## 9. Ticket tracking – show completed task names
-- On `/track` result: query completed `blueprint_tasks` for that report, render a compact checklist (task title only, ✓). Add curl snippet in Admin Settings for `GET /rest/v1/blueprint_tasks?...&status=eq.completed`.
+- **Auth**: enforce strong password policy on signup + password change (min 10 chars, mixed case, digit, symbol) via zod.
+- **Session**: enable Supabase leaked-password protection; add idle-timeout auto-logout (30 min) for admin dashboard.
+- **Rate limiting**: add a lightweight `auth_attempts` table + edge function guard for `/admin` and `/cadre/login` (max 5 failures / 15 min / IP+email → temporary lock).
+- **RLS review**: audit all admin-only tables to ensure no `anon` grants leak; convert any client-side role check to server-side via `has_role()`.
+- **Edge functions**: enforce `getClaims()` + admin-role check on every admin-only function (create-user, ai-* admin, delete endpoints).
+- **Headers**: add CSP, X-Frame-Options, Referrer-Policy via `index.html` meta + `vercel/hosting` headers where possible.
+- **Input validation**: add zod schemas on all admin mutation forms.
+- **Audit log**: new `admin_audit_log` table capturing who did what (delete, hold, extend, role change).
 
-## 10. Complaint PDF download in admin
-- Reuse `src/lib/complaintPdf.ts` (`generateComplaintPdf`). Add "Download Complaint PDF" button in `ProblemDetailModal`, `WelfareDetailModal`, `FundRequestsManagement` detail. Skip corruption (per prior requirement).
+### 4. Super Admin can add location + evidence to any report
 
-## 11. Fix persistent English task/criteria strings
-- Root cause: some strings arrive already partially Tamil (mixed) so `isAlreadyTamil` heuristic short-circuits translation. Change `useAutoTranslate` to translate when the string is **mostly** non-Tamil (Tamil chars <30%) instead of "any Tamil char present". Apply the hook to every place task titles/criteria/file-upload labels render.
+In the Problem / Welfare / Fund detail modal, when `latitude/longitude` is null OR when admin wants to enrich:
 
-## Files touched (high level)
-- `vite.config.ts`, new `src/pwa/register.ts`, `src/main.tsx`
-- `src/pages/TrackProblem.tsx`, `src/components/admin/AdminSettings.tsx`
-- `src/components/cadre/CadreMyTasks.tsx`, `CadreAIInbox.tsx`, `src/components/blueprint/*`, `src/hooks/useAutoTranslate.ts`
-- `src/components/blueprint/ResolutionBlueprintPanel.tsx` (Confirm Success)
-- Admin modals: `ProblemDetailModal.tsx`, `WelfareDetailModal.tsx`, `CorruptionDetailModal.tsx`, `FundRequestsManagement.tsx` (+ badges, PDF btn, Completed Flow tab, Confirm Completion btn)
-- `supabase/functions/ai-score-evidence/index.ts`
-- Media viewer used in cadre pages → switch to `MediaPreviewModal`
-- Welfare `AssignModal` z-index
+- "Set location on map" button opens a Google-Maps-based picker (project already uses map components) → saves `latitude`, `longitude`, and reverse-geocoded `address_line`.
+- "Add evidence images" uploader that pushes files to the existing `problem-media` / `completed-works` / `corruption-evidence` buckets and inserts rows into `problem_media` (and equivalent for welfare/fund; add a `welfare_media` / `fund_media` table if missing).
+- Both actions logged in `admin_audit_log`.
 
-## Non-code
-- No DB schema changes required — reuse existing `status` text column with new value `pending_admin_confirmation`. If any status is an enum, migration will add the value.
+### 5. Fix "Last seen" always showing "Never opened app" for cadres
+
+Root cause is unconfirmed — needs a quick check in build mode. Likely one of:
+- `cadres.last_seen_at` column exists but is never written, or
+- code reads a differently-named column, or
+- write happens but RLS blocks the update from the cadre client.
+
+Plan:
+1. Confirm the column name and where it's read (Cadre list / CadreDetailModal).
+2. Add a heartbeat: on cadre app mount + every 5 min while active, upsert `last_seen_at = now()` via an RPC (`SECURITY DEFINER`) so RLS can't block it.
+3. Backfill existing cadres to `null` (leave as-is) and let heartbeat populate going forward.
+4. Display formatted IST relative time ("2 min ago", "3 h ago", "Never" only if truly null).
+
+### 6. Delete option for issues data (Super Admin)
+
+- Add "Delete" action (with confirm dialog + typed reason) in Problems, Welfare, Fund Requests, Corruption Reports management tables and detail modals.
+- Server: RPC `admin_delete_issue(_kind, _id, _reason)` — SECURITY DEFINER, checks `has_role(auth.uid(),'admin')`, cascades related rows (media, assignments, updates, blueprints), writes to `admin_audit_log`.
+- Soft-delete first (`deleted_at`, `deleted_reason`, `deleted_by`), hard-delete only after 30 days via a scheduled cleanup — protects against accidental loss.
+- Deleted rows hidden from every non-admin query.
+
+---
+
+## Technical notes
+
+- Migrations needed: new columns (`on_hold*`, `deleted_at*`, `last_seen_at` if missing), new tables (`admin_audit_log`, `auth_attempts`, optional `welfare_media`, `fund_media`), new RPCs (`admin_bulk_extend_deadline`, `admin_toggle_hold`, `admin_delete_issue`, `cadre_heartbeat`).
+- All RPCs `SECURITY DEFINER` + explicit role check inside the function body.
+- UI reuses existing shadcn Dialog / DatePicker / Popover patterns; no new deps.
+- Google Maps picker uses the existing map integration already in `src/components/maps/`.
+
+## Open questions
+
+1. For hold/pause — should SLA clock **pause** (add held duration back to due date on resume) or just **suppress escalations** while held? I'd default to pause-and-extend.
+2. For delete — soft-delete with 30-day recovery window OK, or do you want immediate hard delete?
+3. Idle-logout of 30 min OK for admins, or longer?
