@@ -24,6 +24,8 @@ interface Props {
   kind?: Kind;
   entity?: any;
   isAdmin?: boolean;
+  /** Internal: which workflow track to render (used by tabbed wrapper). */
+  track?: 'field' | 'online';
 }
 
 type EvidenceFile = { url: string; label: string; uploaded_by?: string | null; at: string; name?: string };
