@@ -73,6 +73,7 @@ const CadreDashboard: React.FC = () => {
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
   );
   const [assignments, setAssignments] = useState<any[]>(cached?.assignments || []);
+  const [recalled, setRecalled] = useState<any[]>([]);
   const [welfareIds, setWelfareIds] = useState<string[]>(cached?.welfareIds || []);
   const [postings, setPostings] = useState<any[]>(cached?.postings || []);
   const [escalations, setEscalations] = useState<any[]>(cached?.escalations || []);
@@ -151,6 +152,29 @@ const CadreDashboard: React.FC = () => {
     setAssignments(merged);
     const welfareIdList = Array.from(new Set([...(waDirectRes.data || []), ...(waTeamRes.data || [])].map((x: any) => x.welfare_id)));
     setWelfareIds(welfareIdList);
+
+    // Fetch recently reverted assignments (last 30 days) where this cadre used to be the owner/claimer,
+    // so they can see the admin's revert notice + reason.
+    const sinceIso = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
+    const { data: recalledRows } = await supabase
+      .from('problem_assignments' as any)
+      .select('*')
+      .not('recalled_at', 'is', null)
+      .gte('recalled_at', sinceIso)
+      .or(`recalled_from_cadre_id.eq.${c.id},cadre_id.eq.${c.id},claimed_by_cadre_id.eq.${c.id}`)
+      .order('recalled_at', { ascending: false })
+      .limit(20);
+    const recIds = Array.from(new Set((recalledRows || []).map((r: any) => r.problem_id)));
+    let recProblems: Record<string, any> = {};
+    if (recIds.length) {
+      const { data: rp } = await supabase.from('problems')
+        .select('id,ticket_no,title,status,urgency,department,area,constituency,created_at')
+        .in('id', recIds);
+      (rp || []).forEach((p: any) => { recProblems[p.id] = p; });
+    }
+    setRecalled((recalledRows || [])
+      .map((r: any) => ({ ...r, problem: recProblems[r.problem_id] }))
+      .filter((r: any) => r.problem));
 
     // Write session cache so next mount can serve instantly without shimmer.
     try {
