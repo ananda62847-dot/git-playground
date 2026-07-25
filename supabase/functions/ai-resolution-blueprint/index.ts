@@ -17,12 +17,14 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { problem_id, welfare_id, corruption_id, force } = body || {};
+    const { problem_id, welfare_id, corruption_id, force, track: trackIn } = body || {};
     let kind: Kind | null = null; let entityId: string | null = null;
     if (problem_id) { kind = "problem"; entityId = problem_id; }
     else if (welfare_id) { kind = "welfare"; entityId = welfare_id; }
     else if (corruption_id) { kind = "corruption"; entityId = corruption_id; }
     if (!kind || !entityId) return json({ error: "problem_id | welfare_id | corruption_id required" }, 400);
+
+    const track: "field" | "online" = trackIn === "online" ? "online" : "field";
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -35,7 +37,7 @@ Deno.serve(async (req) => {
 
     if (!force) {
       const { data: existing } = await sb
-        .from("resolution_blueprints").select("id").eq(fkCol, entityId).eq("is_active", true).maybeSingle();
+        .from("resolution_blueprints").select("id").eq(fkCol, entityId).eq("track", track).eq("is_active", true).maybeSingle();
       if (existing) return json({ blueprint_id: existing.id, cached: true });
     }
 
