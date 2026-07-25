@@ -2099,6 +2099,7 @@ export type Database = {
           responsible_department: string | null
           title: string | null
           title_ta: string | null
+          track: string
           updated_at: string
           version: number
           welfare_id: string | null
@@ -2118,6 +2119,7 @@ export type Database = {
           responsible_department?: string | null
           title?: string | null
           title_ta?: string | null
+          track?: string
           updated_at?: string
           version?: number
           welfare_id?: string | null
@@ -2137,6 +2139,7 @@ export type Database = {
           responsible_department?: string | null
           title?: string | null
           title_ta?: string | null
+          track?: string
           updated_at?: string
           version?: number
           welfare_id?: string | null

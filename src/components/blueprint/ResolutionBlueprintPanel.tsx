@@ -24,6 +24,8 @@ interface Props {
   kind?: Kind;
   entity?: any;
   isAdmin?: boolean;
+  /** Internal: which workflow track to render (used by tabbed wrapper). */
+  track?: 'field' | 'online';
 }
 
 type EvidenceFile = { url: string; label: string; uploaded_by?: string | null; at: string; name?: string };
@@ -97,7 +99,7 @@ const taskSatisfied = (t: Task) => {
   return reqOk && critOk;
 };
 
-const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, isAdmin = false }) => {
+const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, isAdmin = false, track = 'field' }) => {
   const T = useT();
   const { language } = useLanguage();
   const isTa = language === 'ta';
@@ -119,6 +121,7 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
       .from('resolution_blueprints' as any)
       .select('*')
       .eq(fkCol, ent.id)
+      .eq('track', track)
       .eq('is_active', true)
       .maybeSingle();
     if (!bpRow) { setBp(null); setTasks([]); setAudit([]); setLoading(false); setHydrated(true); return; }
@@ -128,7 +131,6 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
       supabase.from('blueprint_audit_log' as any).select('*').eq('blueprint_id', (bpRow as any).id).order('created_at', { ascending: false }).limit(100),
     ]);
     const newTasks = ((tRows as any) || []) as Task[];
-    // Merge in place to avoid flicker: keep same array identity slots when ids match
     setTasks(prev => {
       if (prev.length === newTasks.length && prev.every((p, i) => p.id === newTasks[i].id)) {
         return newTasks.map((n, i) => ({ ...prev[i], ...n }));
@@ -138,9 +140,9 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
     setAudit((aRows as any) || []);
     setLoading(false);
     setHydrated(true);
-  }, [ent.id, fkCol, hydrated]);
+  }, [ent.id, fkCol, hydrated, track]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ent.id, fkCol]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ent.id, fkCol, track]);
 
   // Auto-translate missing Tamil fields when user is in Tamil mode.
   // Also detects missing Tamil translations for evidence_required[] / success_criteria[] arrays.
@@ -174,7 +176,7 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
   const generate = async (force = false) => {
     setGenerating(true);
     try {
-      const body: any = { force };
+      const body: any = { force, track };
       body[fkCol] = ent.id;
       const { data, error } = await supabase.functions.invoke('ai-resolution-blueprint', { body });
       if (error) throw error;
@@ -658,6 +660,21 @@ const ConfirmSuccessButton: React.FC<{ kind: Kind; entityId: string; onDone: () 
       <CheckCircle2 className="w-4 h-4 mr-2" />
       {busy ? 'Submitting…' : 'Confirm Success — send to admin'}
     </Button>
+  );
+};
+
+const ResolutionBlueprintPanel: React.FC<Props> = (props) => {
+  const [track, setTrack] = useState<'field' | 'online'>('field');
+  return (
+    <div className="space-y-2">
+      <Tabs value={track} onValueChange={(v) => setTrack(v as 'field' | 'online')} className="w-full">
+        <TabsList className="grid grid-cols-2 h-9 w-full">
+          <TabsTrigger value="field" className="text-xs">🏘️ Field workflow</TabsTrigger>
+          <TabsTrigger value="online" className="text-xs">💻 Online portals</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <SingleTrackPanel {...props} track={track} />
+    </div>
   );
 };
 

@@ -17,12 +17,14 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { problem_id, welfare_id, corruption_id, force } = body || {};
+    const { problem_id, welfare_id, corruption_id, force, track: trackIn } = body || {};
     let kind: Kind | null = null; let entityId: string | null = null;
     if (problem_id) { kind = "problem"; entityId = problem_id; }
     else if (welfare_id) { kind = "welfare"; entityId = welfare_id; }
     else if (corruption_id) { kind = "corruption"; entityId = corruption_id; }
     if (!kind || !entityId) return json({ error: "problem_id | welfare_id | corruption_id required" }, 400);
+
+    const track: "field" | "online" = trackIn === "online" ? "online" : "field";
 
     const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
@@ -35,14 +37,14 @@ Deno.serve(async (req) => {
 
     if (!force) {
       const { data: existing } = await sb
-        .from("resolution_blueprints").select("id").eq(fkCol, entityId).eq("is_active", true).maybeSingle();
+        .from("resolution_blueprints").select("id").eq(fkCol, entityId).eq("track", track).eq("is_active", true).maybeSingle();
       if (existing) return json({ blueprint_id: existing.id, cached: true });
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) return json({ error: "AI not configured" }, 500);
 
-    const system = `You are an experienced public-grievance operations officer in Tamil Nadu, India.
+    const systemField = `You are an experienced public-grievance operations officer in Tamil Nadu, India.
 Given a citizen report, produce a STRUCTURED RESOLUTION BLUEPRINT — a dependent task workflow that any newly-joined cadre can follow without guesswork.
 
 CRITICAL — contact accuracy. For each task, populate the "contact_point" field with a SPECIFIC office/role who must be contacted, tailored to the area:
@@ -73,6 +75,49 @@ Return STRICT JSON ONLY (no markdown), matching:
   ]
 }
 Produce 4-8 concrete tasks specific to this issue. Always end with a "Citizen Verification" task owned by the Field Cadre.`;
+
+    const systemOnline = `You are a digital-governance specialist in Tamil Nadu, India, expert in Government of India and Government of Tamil Nadu ONLINE citizen portals.
+Given a citizen report, produce a STRUCTURED ONLINE-RESOLUTION BLUEPRINT — a dependent task workflow that resolves the issue PURELY via official web portals, mobile apps, helplines and email, WITHOUT any in-person office visits.
+
+CRITICAL — use REAL, currently-live portals and channels. Choose whichever apply to the case:
+  • Namma TN citizen portal: https://tnegov.tn.gov.in / https://tnedistrict.tn.gov.in
+  • CM Cell / CMHRMS grievance: https://cmcell.tn.gov.in
+  • CPGRAMS (central): https://pgportal.gov.in
+  • Chennai Corporation "Namma Chennai" app; Coimbatore Corporation grievance portal; other ULB portals
+  • TNEB (electricity) — Minnagam 94987 94987, tneb.tnebnet.org
+  • CMWSSB (water, Chennai) — Dial 4567; TWAD Board (rural water) helpline 1916
+  • TN Police citizen services: eservices.tnpolice.gov.in / 100 / 112
+  • Consumer / civic 1912 (power), 1077 (district collectorate), 1098 (child), 181 (women), 108 (ambulance)
+  • Welfare schemes: respective portals (e.g., cmuhs, sipcot, tnvelaivaaippu, e-Sevai, Aadhaar UIDAI, PDS TNPDS tnpds.gov.in)
+  • Anti-corruption: DVAC — dvac.tn.gov.in / 1064; Lokayukta TN
+
+For EACH task provide:
+  • "contact_point": the exact portal URL, app name, helpline number or official email that the cadre must use.
+  • Steps for register → track (with ticket ID) → escalate (next-tier portal / CPGRAMS / Right to Service Act appeal) → close-with-proof.
+  • Explicit reminders to save screenshots of every submission and acknowledgement as evidence.
+
+Return STRICT JSON ONLY (no markdown), matching:
+{
+  "title": string,
+  "case_summary": string,
+  "responsible_department": string,
+  "estimated_days": number,
+  "area_type": "urban" | "rural" | "semi_urban" | "unknown",
+  "tasks": [
+    {
+      "title": string, "objective": string, "owner_role": string,
+      "contact_point": string,
+      "priority": "low"|"medium"|"high"|"critical",
+      "due_in_hours": number,
+      "depends_on_seq": [number],
+      "evidence_required": [string],
+      "success_criteria": [string]
+    }
+  ]
+}
+Produce 4-8 concrete tasks. Owners should be "Cyber Cadre" / "Digital Volunteer" / "Field Cadre" as appropriate. Always end with a "Citizen Verification (Online)" task where the cadre confirms resolution with the citizen and uploads final acknowledgement screenshots.`;
+
+    const system = track === "online" ? systemOnline : systemField;
 
     const ctx: Record<string, any> = { kind };
     if (kind === "problem") {
@@ -119,12 +164,13 @@ Produce 4-8 concrete tasks specific to this issue. Always end with a "Citizen Ve
 
     const { data: prev } = await sb
       .from("resolution_blueprints").select("version")
-      .eq(fkCol, entityId).order("version", { ascending: false }).limit(1).maybeSingle();
+      .eq(fkCol, entityId).eq("track", track).order("version", { ascending: false }).limit(1).maybeSingle();
     const nextVersion = (prev?.version ?? 0) + 1;
-    if (prev) await sb.from("resolution_blueprints").update({ is_active: false }).eq(fkCol, entityId);
+    if (prev) await sb.from("resolution_blueprints").update({ is_active: false }).eq(fkCol, entityId).eq("track", track);
 
     const bpInsert: Record<string, any> = {
       version: nextVersion,
+      track,
       title: plan.title?.slice(0, 200) || (entity.title || "Resolution Blueprint"),
       case_summary: plan.case_summary || null,
       responsible_department: plan.responsible_department || entity.department || null,
@@ -177,12 +223,12 @@ Produce 4-8 concrete tasks specific to this issue. Always end with a "Citizen Ve
     const auditRow: Record<string, any> = {
       blueprint_id: bp.id, action: nextVersion === 1 ? "generated" : "regenerated",
       actor_label: "Makkal Connect AI",
-      reason: `Blueprint v${nextVersion} generated with ${plan.tasks.length} tasks`,
+      reason: `${track === "online" ? "Online" : "Field"} blueprint v${nextVersion} generated with ${plan.tasks.length} tasks`,
     };
     auditRow[fkCol] = entityId;
     await sb.from("blueprint_audit_log").insert(auditRow);
 
-    return json({ blueprint_id: bp.id, version: nextVersion, tasks: plan.tasks.length });
+    return json({ blueprint_id: bp.id, version: nextVersion, track, tasks: plan.tasks.length });
   } catch (e: any) {
     return json({ error: e?.message || String(e) }, 500);
   }
