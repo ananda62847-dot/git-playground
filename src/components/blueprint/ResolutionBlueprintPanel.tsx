@@ -176,7 +176,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
   const generate = async (force = false) => {
     setGenerating(true);
     try {
-      const body: any = { force };
+      const body: any = { force, track };
       body[fkCol] = ent.id;
       const { data, error } = await supabase.functions.invoke('ai-resolution-blueprint', { body });
       if (error) throw error;
