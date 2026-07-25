@@ -71,8 +71,8 @@ interface Props {
 
 const CadreWorkspace: React.FC<Props> = ({ problem: initialProblem, assignment, cadreId, viewOnly: viewOnlyProp, onClose }) => {
   const [problem, setProblem] = useState<any>(initialProblem);
-  // If the active assignment was escalated, force view-only regardless of who claimed it.
-  const viewOnly = viewOnlyProp || !!assignment?.escalated_at;
+  // Force view-only when: admin toggled hold, admin recalled the assignment, or an escalation is active.
+  const viewOnly = viewOnlyProp || !!assignment?.escalated_at || !!assignment?.recalled_at || !!problem?.on_hold;
   const [tab, setTab] = useState('plan');
   const [media, setMedia] = useState<any[]>([]);
   const [updates, setUpdates] = useState<any[]>([]);
@@ -245,7 +245,19 @@ const CadreWorkspace: React.FC<Props> = ({ problem: initialProblem, assignment, 
           <Button variant="ghost" size="sm" onClick={onClose}><X className="w-5 h-5" /></Button>
         </div>
 
-        {assignment?.escalated_at && (
+        {problem?.on_hold && (
+          <div className="bg-amber-500/20 border-b border-amber-500/50 px-4 py-2 text-amber-900 dark:text-amber-100 text-xs font-medium flex items-center gap-2 shrink-0">
+            <ShieldAlert className="w-4 h-4" />
+            ⏸ This report has been paused by a super admin — read-only. {problem.hold_reason ? `Reason: ${problem.hold_reason}` : 'Wait for it to be resumed before taking any action.'}
+          </div>
+        )}
+        {assignment?.recalled_at && (
+          <div className="bg-orange-500/20 border-b border-orange-500/50 px-4 py-2 text-orange-900 dark:text-orange-100 text-xs font-medium flex items-center gap-2 shrink-0">
+            <ShieldAlert className="w-4 h-4" />
+            🔁 This assignment was <b>reverted by super admin</b> — you no longer own it and cannot make changes. {assignment.recalled_reason ? `Reason: ${assignment.recalled_reason}` : ''}
+          </div>
+        )}
+        {assignment?.escalated_at && !assignment?.recalled_at && (
           <div className="bg-amber-500/15 border-b border-amber-500/40 px-4 py-2 text-amber-900 dark:text-amber-200 text-xs font-medium flex items-center gap-2 shrink-0">
             <ShieldAlert className="w-4 h-4" />
             🔒 This report has been escalated — your access is view-only. The constituency admin is now handling it.
