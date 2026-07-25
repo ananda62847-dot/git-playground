@@ -21,6 +21,8 @@ import { downloadTamilComplaintPdf } from '@/lib/tamilComplaintPdf';
 import ReportInternalNotes from '@/components/admin/ReportInternalNotes';
 import FalseCloseControl from '@/components/admin/FalseCloseControl';
 import AdminIssueControls from '@/components/admin/AdminIssueControls';
+import ExtendItemDeadlinesButton from '@/components/admin/ExtendItemDeadlinesButton';
+import RecallAssignmentButton from '@/components/admin/RecallAssignmentButton';
 import { toast } from 'sonner';
 
 const timeAgo = (iso: string) => {
@@ -120,6 +122,7 @@ const ProblemDetailModal: React.FC<{ problem: any; onClose: () => void }> = ({ p
             <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{problem.ticket_no}</span>
             <Badge variant="outline" className="text-[10px]">{dep?.icon} {dep?.en}</Badge>
             <Badge variant="outline" className={`text-[10px] ${stage?.color || ''}`}>{stage?.en || problem.status}</Badge>
+            {problem.on_hold && <Badge className="bg-amber-500 text-white text-[10px]">⏸ PAUSED</Badge>}
             {problem.urgency === 'emergency' && <Badge className="bg-red-600 text-white text-[10px]">EMERGENCY</Badge>}
             {problem.urgency === 'high' && <Badge className="bg-orange-500 text-white text-[10px]">HIGH</Badge>}
             {problem.is_cadre_filed && <CadreFiledBadge cadreName={filedByCadre?.name} />}
@@ -162,7 +165,13 @@ const ProblemDetailModal: React.FC<{ problem: any; onClose: () => void }> = ({ p
               </Button>
             </div>
           </div>
-          <div className="mt-2 flex items-center justify-end">
+          <div className="mt-2 flex items-center justify-end flex-wrap gap-1">
+            <ExtendItemDeadlinesButton kind="problem" id={problem.id} compact />
+            <RecallAssignmentButton
+              problemId={problem.id}
+              hasActiveAssignment={assignments.some((a: any) => a.active)}
+              onRecalled={onClose}
+            />
             <AdminIssueControls
               kind="problem"
               id={problem.id}
