@@ -223,12 +223,12 @@ Produce 4-8 concrete tasks. Owners should be "Cyber Cadre" / "Digital Volunteer"
     const auditRow: Record<string, any> = {
       blueprint_id: bp.id, action: nextVersion === 1 ? "generated" : "regenerated",
       actor_label: "Makkal Connect AI",
-      reason: `Blueprint v${nextVersion} generated with ${plan.tasks.length} tasks`,
+      reason: `${track === "online" ? "Online" : "Field"} blueprint v${nextVersion} generated with ${plan.tasks.length} tasks`,
     };
     auditRow[fkCol] = entityId;
     await sb.from("blueprint_audit_log").insert(auditRow);
 
-    return json({ blueprint_id: bp.id, version: nextVersion, tasks: plan.tasks.length });
+    return json({ blueprint_id: bp.id, version: nextVersion, track, tasks: plan.tasks.length });
   } catch (e: any) {
     return json({ error: e?.message || String(e) }, 500);
   }
