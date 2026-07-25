@@ -663,4 +663,19 @@ const ConfirmSuccessButton: React.FC<{ kind: Kind; entityId: string; onDone: () 
   );
 };
 
+const ResolutionBlueprintPanel: React.FC<Props> = (props) => {
+  const [track, setTrack] = useState<'field' | 'online'>('field');
+  return (
+    <div className="space-y-2">
+      <Tabs value={track} onValueChange={(v) => setTrack(v as 'field' | 'online')} className="w-full">
+        <TabsList className="grid grid-cols-2 h-9 w-full">
+          <TabsTrigger value="field" className="text-xs">🏘️ Field workflow</TabsTrigger>
+          <TabsTrigger value="online" className="text-xs">💻 Online portals</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <SingleTrackPanel {...props} track={track} />
+    </div>
+  );
+};
+
 export default ResolutionBlueprintPanel;
