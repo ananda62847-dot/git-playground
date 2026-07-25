@@ -99,7 +99,7 @@ const taskSatisfied = (t: Task) => {
   return reqOk && critOk;
 };
 
-const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, isAdmin = false }) => {
+const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, isAdmin = false, track = 'field' }) => {
   const T = useT();
   const { language } = useLanguage();
   const isTa = language === 'ta';
@@ -121,6 +121,7 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
       .from('resolution_blueprints' as any)
       .select('*')
       .eq(fkCol, ent.id)
+      .eq('track', track)
       .eq('is_active', true)
       .maybeSingle();
     if (!bpRow) { setBp(null); setTasks([]); setAudit([]); setLoading(false); setHydrated(true); return; }
@@ -130,7 +131,6 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
       supabase.from('blueprint_audit_log' as any).select('*').eq('blueprint_id', (bpRow as any).id).order('created_at', { ascending: false }).limit(100),
     ]);
     const newTasks = ((tRows as any) || []) as Task[];
-    // Merge in place to avoid flicker: keep same array identity slots when ids match
     setTasks(prev => {
       if (prev.length === newTasks.length && prev.every((p, i) => p.id === newTasks[i].id)) {
         return newTasks.map((n, i) => ({ ...prev[i], ...n }));
@@ -140,9 +140,9 @@ const ResolutionBlueprintPanel: React.FC<Props> = ({ problem, kind: kindProp, en
     setAudit((aRows as any) || []);
     setLoading(false);
     setHydrated(true);
-  }, [ent.id, fkCol, hydrated]);
+  }, [ent.id, fkCol, hydrated, track]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ent.id, fkCol]);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ent.id, fkCol, track]);
 
   // Auto-translate missing Tamil fields when user is in Tamil mode.
   // Also detects missing Tamil translations for evidence_required[] / success_criteria[] arrays.
