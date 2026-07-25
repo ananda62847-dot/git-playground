@@ -138,10 +138,20 @@ const CadreReportDetail: React.FC = () => {
       </header>
 
       <main className="px-3 py-3 space-y-3">
+        {problem.on_hold && (
+          <div className="rounded-lg border border-amber-400 bg-amber-50 text-amber-900 px-3 py-2 text-xs flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" />
+            <div>
+              <div className="font-semibold">⏸ Paused by super admin — view only</div>
+              {problem.hold_reason && <div className="italic mt-0.5">Reason: {problem.hold_reason}</div>}
+            </div>
+          </div>
+        )}
         {/* Status pills */}
         <div className="flex flex-wrap gap-1.5">
           <Badge variant="outline" className="text-[10px]">{dep?.icon} {depLabel(dep, lang)}</Badge>
           <Badge variant="outline" className={`text-[10px] ${stage?.color}`}>{stageLabel(stage, lang)}</Badge>
+          {problem.on_hold && <Badge className="bg-amber-500 text-white text-[10px]">⏸ PAUSED</Badge>}
           {problem.urgency === 'emergency' && <Badge className="bg-red-600 text-white text-[10px]">{T.emergency.toUpperCase()}</Badge>}
           {problem.urgency === 'high' && <Badge className="bg-orange-500 text-white text-[10px]">{T.high.toUpperCase()}</Badge>}
           {problem.is_cadre_filed && <CadreFiledBadge cadreName={filedByCadre?.name} />}
