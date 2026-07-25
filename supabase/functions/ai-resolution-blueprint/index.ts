@@ -164,12 +164,13 @@ Produce 4-8 concrete tasks. Owners should be "Cyber Cadre" / "Digital Volunteer"
 
     const { data: prev } = await sb
       .from("resolution_blueprints").select("version")
-      .eq(fkCol, entityId).order("version", { ascending: false }).limit(1).maybeSingle();
+      .eq(fkCol, entityId).eq("track", track).order("version", { ascending: false }).limit(1).maybeSingle();
     const nextVersion = (prev?.version ?? 0) + 1;
-    if (prev) await sb.from("resolution_blueprints").update({ is_active: false }).eq(fkCol, entityId);
+    if (prev) await sb.from("resolution_blueprints").update({ is_active: false }).eq(fkCol, entityId).eq("track", track);
 
     const bpInsert: Record<string, any> = {
       version: nextVersion,
+      track,
       title: plan.title?.slice(0, 200) || (entity.title || "Resolution Blueprint"),
       case_summary: plan.case_summary || null,
       responsible_department: plan.responsible_department || entity.department || null,
