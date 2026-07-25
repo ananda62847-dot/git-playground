@@ -73,6 +73,7 @@ const CadreDashboard: React.FC = () => {
     typeof window !== 'undefined' && 'Notification' in window ? Notification.permission : 'unsupported'
   );
   const [assignments, setAssignments] = useState<any[]>(cached?.assignments || []);
+  const [recalled, setRecalled] = useState<any[]>([]);
   const [welfareIds, setWelfareIds] = useState<string[]>(cached?.welfareIds || []);
   const [postings, setPostings] = useState<any[]>(cached?.postings || []);
   const [escalations, setEscalations] = useState<any[]>(cached?.escalations || []);
@@ -151,6 +152,29 @@ const CadreDashboard: React.FC = () => {
     setAssignments(merged);
     const welfareIdList = Array.from(new Set([...(waDirectRes.data || []), ...(waTeamRes.data || [])].map((x: any) => x.welfare_id)));
     setWelfareIds(welfareIdList);
+
+    // Fetch recently reverted assignments (last 30 days) where this cadre used to be the owner/claimer,
+    // so they can see the admin's revert notice + reason.
+    const sinceIso = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
+    const { data: recalledRows } = await supabase
+      .from('problem_assignments' as any)
+      .select('*')
+      .not('recalled_at', 'is', null)
+      .gte('recalled_at', sinceIso)
+      .or(`recalled_from_cadre_id.eq.${c.id},cadre_id.eq.${c.id},claimed_by_cadre_id.eq.${c.id}`)
+      .order('recalled_at', { ascending: false })
+      .limit(20);
+    const recIds = Array.from(new Set((recalledRows || []).map((r: any) => r.problem_id)));
+    let recProblems: Record<string, any> = {};
+    if (recIds.length) {
+      const { data: rp } = await supabase.from('problems')
+        .select('id,ticket_no,title,status,urgency,department,area,constituency,created_at')
+        .in('id', recIds);
+      (rp || []).forEach((p: any) => { recProblems[p.id] = p; });
+    }
+    setRecalled((recalledRows || [])
+      .map((r: any) => ({ ...r, problem: recProblems[r.problem_id] }))
+      .filter((r: any) => r.problem));
 
     // Write session cache so next mount can serve instantly without shimmer.
     try {
@@ -387,6 +411,38 @@ const CadreDashboard: React.FC = () => {
               return (
                 <>
                   {render(active, t.empty_active)}
+                  {recalled.length > 0 && (
+                    <details className="pt-3" open>
+                      <summary className="text-xs font-semibold text-orange-700 cursor-pointer py-2">
+                        🔁 Reverted by super admin ({recalled.length})
+                      </summary>
+                      <div className="space-y-2 mt-2">
+                        {recalled.map((r: any) => {
+                          const p = r.problem;
+                          const dep = DEPARTMENTS.find(d => d.id === p.department);
+                          return (
+                            <div key={r.id} className="bg-orange-50 border border-orange-300 rounded-2xl p-4">
+                              <div className="flex flex-wrap gap-1 mb-1">
+                                <span className="font-mono text-[10px] bg-muted px-1.5 rounded">{p.ticket_no}</span>
+                                <Badge variant="outline" className="text-[10px]">{depLabel(dep, lang)}</Badge>
+                                <Badge className="bg-orange-600 text-white text-[10px]">🔁 REVERTED</Badge>
+                              </div>
+                              <div className="font-semibold text-sm break-words">{p.title}</div>
+                              {r.recalled_reason && (
+                                <div className="text-[11px] text-orange-800 mt-1 italic">Admin note: {r.recalled_reason}</div>
+                              )}
+                              <div className="text-[10px] text-muted-foreground mt-1">
+                                Reverted {formatIST(r.recalled_at)} — this report is no longer yours. View only.
+                              </div>
+                              <div className="mt-2">
+                                <Button size="sm" variant="outline" onClick={() => nav(`/cadre/report/${p.id}`)}>View</Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  )}
                   {history.length > 0 && (
                     <details className="pt-3">
                       <summary className="text-xs font-semibold text-muted-foreground cursor-pointer py-2">{t.history_toggle(history.length)}</summary>

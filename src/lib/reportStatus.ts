@@ -1,17 +1,26 @@
 // Single source of truth for "closed" reports — once closed, nothing is editable.
+// Paused (on_hold) and recalled items are also treated as locked (view-only).
 export const CLOSED_STATUSES = ['resolved', 'completed', 'citizen_confirmed', 'rejected', 'duplicate'] as const;
 
-export type ProblemLike = { status?: string | null; closed_as_false?: boolean | null } | null | undefined;
+export type ProblemLike = {
+  status?: string | null;
+  closed_as_false?: boolean | null;
+  on_hold?: boolean | null;
+} | null | undefined;
+
+export const isReportPaused = (p: ProblemLike): boolean => !!p && !!p.on_hold;
 
 export const isReportClosed = (p: ProblemLike): boolean =>
   !!p && (
     !!p.closed_as_false ||
+    !!p.on_hold ||
     (!!p.status && (CLOSED_STATUSES as readonly string[]).includes(p.status))
   );
 
-export const closedBadgeLabel = (statusOrRow?: string | null | { status?: string | null; closed_as_false?: boolean | null }): string => {
+export const closedBadgeLabel = (statusOrRow?: string | null | { status?: string | null; closed_as_false?: boolean | null; on_hold?: boolean | null }): string => {
   const row = typeof statusOrRow === 'object' && statusOrRow !== null ? statusOrRow : null;
   const status = row ? row.status : (statusOrRow as string | null | undefined);
+  if (row?.on_hold) return '⏸ Paused by super admin — view only';
   if (row?.closed_as_false) return '🚫 Closed as false report — locked';
   switch (status) {
     case 'citizen_confirmed': return '✅ Citizen confirmed — view only';

@@ -199,6 +199,9 @@ const ProblemsManagement: React.FC<Props> = ({ allowedConstituencies, isAdmin })
                         <span className="w-1.5 h-1.5 rounded-full bg-white" /> NEW
                       </span>
                     )}
+                    {p.on_hold && (
+                      <span className="absolute top-1.5 left-1.5 text-[10px] font-bold bg-amber-500 text-white px-1.5 py-0.5 rounded">⏸ PAUSED</span>
+                    )}
                     {p.urgency === 'emergency' && (
                       <span className="absolute top-1.5 right-1.5 text-[10px] font-bold bg-red-600 text-white px-1.5 py-0.5 rounded">EMERGENCY</span>
                     )}
@@ -247,6 +250,7 @@ const ProblemsManagement: React.FC<Props> = ({ allowedConstituencies, isAdmin })
                   <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">{p.ticket_no}</span>
                   <Badge variant="outline" className="text-[10px]">{dep?.icon} {dep?.en}</Badge>
                   <Badge className={`text-[10px] ${stage?.color}`} variant="outline">{stage?.en}</Badge>
+                  {p.on_hold && <Badge className="bg-amber-500 text-white text-[10px]">⏸ PAUSED</Badge>}
                   {claim && <Badge className="bg-green-600 text-white text-[10px]">Claimed</Badge>}
                   {p.urgency === 'emergency' && <Badge className="bg-red-600 text-white text-[10px]">EMERGENCY</Badge>}
                   {p.urgency === 'high' && <Badge className="bg-orange-500 text-white text-[10px]">High</Badge>}

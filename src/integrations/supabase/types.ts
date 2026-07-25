@@ -1694,6 +1694,11 @@ export type Database = {
           id: string
           notes: string | null
           problem_id: string
+          recalled_at: string | null
+          recalled_by: string | null
+          recalled_from_cadre_id: string | null
+          recalled_from_team_id: string | null
+          recalled_reason: string | null
           team_id: string | null
         }
         Insert: {
@@ -1708,6 +1713,11 @@ export type Database = {
           id?: string
           notes?: string | null
           problem_id: string
+          recalled_at?: string | null
+          recalled_by?: string | null
+          recalled_from_cadre_id?: string | null
+          recalled_from_team_id?: string | null
+          recalled_reason?: string | null
           team_id?: string | null
         }
         Update: {
@@ -1722,6 +1732,11 @@ export type Database = {
           id?: string
           notes?: string | null
           problem_id?: string
+          recalled_at?: string | null
+          recalled_by?: string | null
+          recalled_from_cadre_id?: string | null
+          recalled_from_team_id?: string | null
+          recalled_reason?: string | null
           team_id?: string | null
         }
         Relationships: [
@@ -2841,6 +2856,14 @@ export type Database = {
       admin_delete_issue: {
         Args: { _id: string; _kind: string; _reason: string }
         Returns: undefined
+      }
+      admin_extend_entity_deadlines: {
+        Args: { _days: number; _id: string; _kind: string }
+        Returns: number
+      }
+      admin_recall_assignment: {
+        Args: { _problem_id: string; _reason: string }
+        Returns: number
       }
       admin_toggle_hold: {
         Args: { _hold: boolean; _id: string; _kind: string; _reason?: string }
