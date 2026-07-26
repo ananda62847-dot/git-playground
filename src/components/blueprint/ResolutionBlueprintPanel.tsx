@@ -118,7 +118,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
 
   const load = useCallback(async (preferredBlueprintId?: string) => {
     if (!ent?.id) return;
-    setLoading(true);
+    if (!hydrated) setLoading(true);
     setLoadError(null);
 
     let bpRow: any = null;
@@ -172,7 +172,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
     setAudit((aRows as any) || []);
     setLoading(false);
     setHydrated(true);
-  }, [ent?.id, fkCol, track]);
+  }, [ent?.id, fkCol, hydrated, track]);
 
   useEffect(() => { load(); }, [load]);
 
