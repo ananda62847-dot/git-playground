@@ -27,13 +27,17 @@ const BlueprintProgressStrip: React.FC<Props> = ({ kind = 'problem', entityId, o
     (async () => {
       setLoading(true);
       const fkCol = fkColumnFor(kind);
-      const { data: bp } = await supabase
+      // Aggregate progress across BOTH tracks (field + online) so the strip
+      // still renders after we split blueprints per track. Prior version used
+      // .maybeSingle() and silently returned null when two active blueprints
+      // (one per track) existed for the same problem.
+      const { data: bps } = await supabase
         .from('resolution_blueprints' as any)
         .select('id')
         .eq(fkCol, entityId)
-        .eq('is_active', true)
-        .maybeSingle();
-      if (!bp) { if (!cancelled) { setStats(null); setLoading(false); } return; }
+        .eq('is_active', true);
+      const bpIds = ((bps as any[]) || []).map(b => b.id);
+      if (bpIds.length === 0) { if (!cancelled) { setStats(null); setLoading(false); } return; }
       const { data: tasks } = await supabase
         .from('blueprint_tasks' as any)
         .select('seq, title, status, evidence_required, success_criteria, evidence_files, criteria_checked, depends_on')
