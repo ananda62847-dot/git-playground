@@ -673,7 +673,8 @@ const ResolutionBlueprintPanel: React.FC<Props> = (props) => {
           <TabsTrigger value="online" className="text-xs">💻 Online portals</TabsTrigger>
         </TabsList>
       </Tabs>
-      <SingleTrackPanel {...props} track={track} />
+      {/* key ensures state resets cleanly when switching tracks */}
+      <SingleTrackPanel key={track} {...props} track={track} />
     </div>
   );
 };
