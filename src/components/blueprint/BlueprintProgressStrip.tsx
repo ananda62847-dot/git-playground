@@ -41,7 +41,7 @@ const BlueprintProgressStrip: React.FC<Props> = ({ kind = 'problem', entityId, o
       const { data: tasks } = await supabase
         .from('blueprint_tasks' as any)
         .select('seq, title, status, evidence_required, success_criteria, evidence_files, criteria_checked, depends_on')
-        .eq('blueprint_id', (bp as any).id)
+        .in('blueprint_id', bpIds)
         .order('seq');
       if (cancelled) return;
       const list = (tasks as any[]) || [];
