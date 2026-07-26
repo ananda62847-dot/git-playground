@@ -112,24 +112,56 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
   const [audit, setAudit] = useState<AuditEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [hydrated, setHydrated] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const locked = isReportClosed(ent);
 
-  const load = useCallback(async () => {
-    if (!hydrated) setLoading(true);
-    const { data: bpRow } = await supabase
-      .from('resolution_blueprints' as any)
-      .select('*')
-      .eq(fkCol, ent.id)
-      .eq('track', track)
-      .eq('is_active', true)
-      .maybeSingle();
+  const load = useCallback(async (preferredBlueprintId?: string) => {
+    if (!ent?.id) return;
+    setLoading(true);
+    setLoadError(null);
+
+    let bpRow: any = null;
+    if (preferredBlueprintId) {
+      const { data, error } = await supabase
+        .from('resolution_blueprints' as any)
+        .select('*')
+        .eq('id', preferredBlueprintId)
+        .maybeSingle();
+      if (!error && data) bpRow = data;
+    }
+
+    if (!bpRow) {
+      // Fetch as a list instead of maybeSingle(): older/live data can briefly have
+      // multiple active rows after the field/online split, which made maybeSingle()
+      // return an error and left cadres stuck on "Generate Blueprint".
+      const { data: bpRows, error } = await supabase
+        .from('resolution_blueprints' as any)
+        .select('*')
+        .eq(fkCol, ent.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Blueprint load failed:', error);
+        setLoadError(error.message || 'Unable to load blueprint right now.');
+        setBp(null); setTasks([]); setAudit([]); setLoading(false); setHydrated(true);
+        return;
+      }
+      const rows = ((bpRows as any[]) || []);
+      bpRow = rows.find(row => (row.track || 'field') === track) || (track === 'field' ? rows.find(row => !row.track) : null);
+    }
+
     if (!bpRow) { setBp(null); setTasks([]); setAudit([]); setLoading(false); setHydrated(true); return; }
-    setBp(prev => (prev && prev.id === (bpRow as any).id ? { ...prev, ...(bpRow as any) } : (bpRow as any)));
-    const [{ data: tRows }, { data: aRows }] = await Promise.all([
-      supabase.from('blueprint_tasks' as any).select('*').eq('blueprint_id', (bpRow as any).id).order('seq'),
-      supabase.from('blueprint_audit_log' as any).select('*').eq('blueprint_id', (bpRow as any).id).order('created_at', { ascending: false }).limit(100),
+    setBp(prev => (prev && prev.id === bpRow.id ? { ...prev, ...bpRow } : bpRow));
+    const [{ data: tRows, error: tErr }, { data: aRows, error: aErr }] = await Promise.all([
+      supabase.from('blueprint_tasks' as any).select('*').eq('blueprint_id', bpRow.id).order('seq'),
+      supabase.from('blueprint_audit_log' as any).select('*').eq('blueprint_id', bpRow.id).order('created_at', { ascending: false }).limit(100),
     ]);
+    if (tErr) {
+      console.error('Blueprint tasks load failed:', tErr);
+      setLoadError(tErr.message || 'Unable to load blueprint tasks right now.');
+    }
+    if (aErr) console.error('Blueprint audit load failed:', aErr);
     const newTasks = ((tRows as any) || []) as Task[];
     setTasks(prev => {
       if (prev.length === newTasks.length && prev.every((p, i) => p.id === newTasks[i].id)) {
@@ -140,9 +172,9 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
     setAudit((aRows as any) || []);
     setLoading(false);
     setHydrated(true);
-  }, [ent.id, fkCol, hydrated, track]);
+  }, [ent?.id, fkCol, track]);
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ent.id, fkCol, track]);
+  useEffect(() => { load(); }, [load]);
 
   // Auto-translate missing Tamil fields when user is in Tamil mode.
   // Also detects missing Tamil translations for evidence_required[] / success_criteria[] arrays.
@@ -182,7 +214,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast.success(force ? 'Blueprint regenerated' : 'Blueprint generated');
-      await load();
+      await load(data?.blueprint_id);
     } catch (e: any) {
       toast.error(e?.message || 'Failed');
     } finally { setGenerating(false); }
@@ -219,9 +251,15 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
         </div>
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row items-center gap-3">
           <div className="text-sm text-muted-foreground flex-1">
-            {T.bp_none_desc}
+            {loadError || T.bp_none_desc}
           </div>
-          <Button size="sm" onClick={() => generate(false)} disabled={generating || locked}>
+          {loadError && (
+            <Button type="button" size="sm" variant="outline" onClick={() => load()} disabled={loading || generating}>
+              <RefreshCw className="w-3 h-3" />
+              <span className="ml-1">Retry</span>
+            </Button>
+          )}
+          <Button type="button" size="sm" onClick={() => generate(false)} disabled={generating || locked}>
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
             <span className="ml-1">{T.bp_generate}</span>
           </Button>
