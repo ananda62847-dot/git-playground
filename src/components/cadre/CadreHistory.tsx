@@ -59,15 +59,15 @@ const CadreHistory: React.FC<{ cadre: any }> = ({ cadre }) => {
       try {
         const fkCol = r.kind === 'problem' ? 'problem_id' : r.kind === 'welfare' ? 'welfare_id' : 'corruption_id';
         const asgTable = r.kind === 'problem' ? 'problem_assignments' : r.kind === 'welfare' ? 'welfare_assignments' : 'corruption_assignments';
-        const [{ data: bp }, { data: asg }] = await Promise.all([
-          supabase.from('resolution_blueprints' as any).select('id').eq(fkCol, r.id).eq('is_active', true).maybeSingle(),
+        const [{ data: bps }, { data: asg }] = await Promise.all([
+          supabase.from('resolution_blueprints' as any).select('id').eq(fkCol, r.id).eq('is_active', true),
           supabase.from(asgTable as any).select('cadre_id, claimed_by_cadre_id, team_id').eq(fkCol, r.id).eq('active', true).maybeSingle(),
         ]);
-        const bpRow: any = bp;
+        const bpIds = ((bps as any[]) || []).map(b => b.id);
         const asgRow: any = asg;
         let progress: { done: number; total: number } | undefined;
-        if (bpRow?.id) {
-          const { data: ts } = await supabase.from('blueprint_tasks' as any).select('status').eq('blueprint_id', bpRow.id);
+        if (bpIds.length) {
+          const { data: ts } = await supabase.from('blueprint_tasks' as any).select('status').in('blueprint_id', bpIds);
           const total = (ts as any[])?.length || 0;
           const done = ((ts as any[]) || []).filter((t: any) => t.status === 'done' || t.status === 'skipped').length;
           progress = { done, total };
