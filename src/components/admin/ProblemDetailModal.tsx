@@ -169,7 +169,7 @@ const ProblemDetailModal: React.FC<{ problem: any; onClose: () => void }> = ({ p
             <ExtendItemDeadlinesButton kind="problem" id={problem.id} compact />
             <RecallAssignmentButton
               problemId={problem.id}
-              hasActiveAssignment={assignments.some((a: any) => a.active)}
+              canRevert={assignments.some((a: any) => a.active) || escalations.some((e: any) => e.status === 'open') || problem.status === 'escalated'}
               onRecalled={onClose}
             />
             <AdminIssueControls

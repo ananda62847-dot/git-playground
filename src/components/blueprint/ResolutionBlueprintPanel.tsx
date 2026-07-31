@@ -99,6 +99,40 @@ const taskSatisfied = (t: Task) => {
   return reqOk && critOk;
 };
 
+const supabaseErrorText = async (error: any, fallback: string) => {
+  if (!error) return fallback;
+  const parts = [error.message, error.code, error.details, error.hint]
+    .filter(Boolean)
+    .map(String);
+  const response = error.context instanceof Response ? error.context : null;
+  if (response) {
+    try {
+      const body = await response.clone().text();
+      if (body && !parts.includes(body)) parts.push(body);
+      parts.push(`HTTP ${response.status}${response.statusText ? ` ${response.statusText}` : ''}`);
+    } catch { /* The response body may already have been consumed. */ }
+  }
+  return parts.length ? parts.join(' · ') : String(error);
+};
+
+const BlueprintErrorBanner: React.FC<{ message: string; onRetry?: () => void; retrying?: boolean }> = ({ message, onRetry, retrying }) => (
+  <div role="alert" className="mb-3 rounded-lg border-2 border-destructive/50 bg-destructive/10 p-3 text-destructive">
+    <div className="flex items-start gap-2">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <div className="text-xs font-bold">Blueprint error</div>
+        <pre className="mt-1 whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed">{message}</pre>
+      </div>
+      {onRetry && (
+        <Button type="button" size="sm" variant="outline" className="h-7 shrink-0" onClick={onRetry} disabled={retrying}>
+          <RefreshCw className={`h-3 w-3 ${retrying ? 'animate-spin' : ''}`} />
+          <span className="ml-1 hidden sm:inline">Retry</span>
+        </Button>
+      )}
+    </div>
+  </div>
+);
+
 const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, isAdmin = false, track = 'field' }) => {
   const T = useT();
   const { language } = useLanguage();
@@ -128,6 +162,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
         .select('*')
         .eq('id', preferredBlueprintId)
         .maybeSingle();
+      if (error) setLoadError(await supabaseErrorText(error, 'Unable to load the generated blueprint.'));
       if (!error && data) bpRow = data;
     }
 
@@ -143,7 +178,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
         .order('created_at', { ascending: false });
       if (error) {
         console.error('Blueprint load failed:', error);
-        setLoadError(error.message || 'Unable to load blueprint right now.');
+        setLoadError(await supabaseErrorText(error, 'Unable to load blueprint right now.'));
         setBp(null); setTasks([]); setAudit([]); setLoading(false); setHydrated(true);
         return;
       }
@@ -159,9 +194,12 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
     ]);
     if (tErr) {
       console.error('Blueprint tasks load failed:', tErr);
-      setLoadError(tErr.message || 'Unable to load blueprint tasks right now.');
+      setLoadError(await supabaseErrorText(tErr, 'Unable to load blueprint tasks right now.'));
     }
-    if (aErr) console.error('Blueprint audit load failed:', aErr);
+    if (aErr) {
+      console.error('Blueprint audit load failed:', aErr);
+      setLoadError(await supabaseErrorText(aErr, 'Unable to load blueprint history right now.'));
+    }
     const newTasks = ((tRows as any) || []) as Task[];
     setTasks(prev => {
       if (prev.length === newTasks.length && prev.every((p, i) => p.id === newTasks[i].id)) {
@@ -207,6 +245,7 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
 
   const generate = async (force = false) => {
     setGenerating(true);
+    setLoadError(null);
     try {
       const body: any = { force, track };
       body[fkCol] = ent.id;
@@ -216,7 +255,9 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
       toast.success(force ? 'Blueprint regenerated' : 'Blueprint generated');
       await load(data?.blueprint_id);
     } catch (e: any) {
-      toast.error(e?.message || 'Failed');
+      const exactError = await supabaseErrorText(e, 'Blueprint generation failed.');
+      setLoadError(exactError);
+      toast.error(exactError);
     } finally { setGenerating(false); }
   };
 
@@ -249,16 +290,11 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
             <Workflow className="w-3.5 h-3.5 text-primary" /> {T.bp_workflow_title}
           </div>
         </div>
+        {loadError && <BlueprintErrorBanner message={loadError} onRetry={() => load()} retrying={loading} />}
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row items-center gap-3">
           <div className="text-sm text-muted-foreground flex-1">
-            {loadError || T.bp_none_desc}
+            {T.bp_none_desc}
           </div>
-          {loadError && (
-            <Button type="button" size="sm" variant="outline" onClick={() => load()} disabled={loading || generating}>
-              <RefreshCw className="w-3 h-3" />
-              <span className="ml-1">Retry</span>
-            </Button>
-          )}
           <Button type="button" size="sm" onClick={() => generate(false)} disabled={generating || locked}>
             {generating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
             <span className="ml-1">{T.bp_generate}</span>
@@ -288,6 +324,8 @@ const SingleTrackPanel: React.FC<Props> = ({ problem, kind: kindProp, entity, is
           <Lock className="w-3.5 h-3.5" /> {closedBadgeLabel(ent.status)} — {T.bp_readonly}
         </div>
       )}
+
+      {loadError && <BlueprintErrorBanner message={loadError} onRetry={() => load()} retrying={loading || generating} />}
 
       <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
         <div className="mb-3">
@@ -704,11 +742,15 @@ const ConfirmSuccessButton: React.FC<{ kind: Kind; entityId: string; onDone: () 
 const ResolutionBlueprintPanel: React.FC<Props> = (props) => {
   const [track, setTrack] = useState<'field' | 'online'>('field');
   return (
-    <div className="space-y-2">
+    <div className="w-full min-w-0 space-y-3">
       <Tabs value={track} onValueChange={(v) => setTrack(v as 'field' | 'online')} className="w-full">
-        <TabsList className="grid grid-cols-2 h-9 w-full">
-          <TabsTrigger value="field" className="text-xs">🏘️ Field workflow</TabsTrigger>
-          <TabsTrigger value="online" className="text-xs">💻 Online portals</TabsTrigger>
+        <TabsList aria-label="Blueprint workflow type" className="grid h-auto min-h-12 w-full grid-cols-2 gap-1 p-1">
+          <TabsTrigger value="field" className="min-h-10 whitespace-normal px-2 text-center text-xs leading-tight">
+            <span aria-hidden>🏘️</span><span className="ml-1">Field workflow</span>
+          </TabsTrigger>
+          <TabsTrigger value="online" className="min-h-10 whitespace-normal px-2 text-center text-xs leading-tight">
+            <span aria-hidden>💻</span><span className="ml-1">Online portals</span>
+          </TabsTrigger>
         </TabsList>
       </Tabs>
       {/* key ensures state resets cleanly when switching tracks */}

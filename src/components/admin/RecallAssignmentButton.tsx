@@ -9,11 +9,11 @@ import { toast } from 'sonner';
 
 interface Props {
   problemId: string;
-  hasActiveAssignment?: boolean;
+  canRevert?: boolean;
   onRecalled?: () => void;
 }
 
-const RecallAssignmentButton: React.FC<Props> = ({ problemId, hasActiveAssignment = true, onRecalled }) => {
+const RecallAssignmentButton: React.FC<Props> = ({ problemId, canRevert = true, onRecalled }) => {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
@@ -29,7 +29,7 @@ const RecallAssignmentButton: React.FC<Props> = ({ problemId, hasActiveAssignmen
     onRecalled?.();
   };
 
-  if (!hasActiveAssignment) return null;
+  if (!canRevert) return null;
 
   return (
     <>
@@ -41,7 +41,7 @@ const RecallAssignmentButton: React.FC<Props> = ({ problemId, hasActiveAssignmen
           <DialogHeader><DialogTitle>Revert assignment</DialogTitle></DialogHeader>
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              The currently assigned cadre/team will lose edit access on this report and see a "Reverted by super admin" notice. You can then reassign it to a different cadre or team.
+              The current assignment and any open escalation will be closed. The cadre/team will lose edit access and see a "Reverted by super admin" notice. You can then reassign the report.
             </p>
             <Label>Reason (required)</Label>
             <Textarea value={reason} onChange={e => setReason(e.target.value)} rows={3}
